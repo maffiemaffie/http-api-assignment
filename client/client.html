@@ -5,7 +5,64 @@
   <link rel="stylesheet" type="text/css" href="/style.css">
   
   <script>
+    const handleResponse = async (response) => {
+      const content = document.querySelector('#content');
 
+      const responseTitles = {
+        200: 'Success',
+        400: 'Bad Request',
+        401: 'Unauthorized',
+        403: 'Forbidden',
+        404: 'Not Found',
+        500: 'Internal',
+        501: 'Not Implemented'
+      };
+
+      content.innerHTML = responseTitles[response.status] ? 
+      `<b>${responseTitles[response.status]}</b>`:
+      `<p>Status code not implemented</p>`;
+
+      const contentType = response.headers.get('Content-Type');
+      const responseText = await response.text();
+
+      console.log(responseText);
+
+      if (contentType === 'application/json') {
+        const parsedResponse = JSON.parse(responseText);
+        content.innerHTML += `<p>Message: ${parsedResponse.message}</p>`;
+      } else if (contentType === 'text/xml') {
+        const parsedResponse = new window.DOMParser().parseFromString(responseText, 'text/xml');
+        content.innerHTML += `<p>Message: ${parsedResponse.querySelector('message').textContent}</p>`;
+      }
+    }
+
+    const sendFetchRequest = (url, acceptedType) => {
+      const options = {
+        method: 'GET',
+        headers: { 'Accept': acceptedType },
+      };
+
+      const fetchPromise = fetch(url, options);
+
+      fetchPromise.then(response => { handleResponse(response) });
+    }
+
+    const initiateFetch = () => {
+      const pageSelect = document.querySelector('#page');
+      const typeSelect = document.querySelector('#type');
+
+      const page = pageSelect.options[pageSelect.selectedIndex].value;
+      const type = typeSelect.options[typeSelect.selectedIndex].value;
+
+      sendFetchRequest(page, type);
+    }
+
+    const init = () => {
+      const submitButton = document.querySelector('#send');
+      submitButton.addEventListener('click', initiateFetch);
+    };
+
+    window.onload = init;
   </script>
 </head>
 <body>
